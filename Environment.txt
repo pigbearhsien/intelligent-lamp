@@ -1,0 +1,22 @@
+{
+  "name": "Environment",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "temperature": {
+      "type": "number"
+    },
+    "humidity": {
+      "type": "number"
+    },
+    "brightness": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "date"
+  ]
+}
