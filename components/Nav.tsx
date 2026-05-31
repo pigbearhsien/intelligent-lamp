@@ -1,0 +1,41 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { LayoutDashboard, Calendar, Timer, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const NAV = [
+  { to: '/', icon: LayoutDashboard, label: '總覽' },
+  { to: '/calendar', icon: Calendar, label: '行事曆' },
+  { to: '/timer', icon: Timer, label: '計時器' },
+  { to: '/groups', icon: Users, label: '讀書小組' },
+];
+
+export default function Nav() {
+  const pathname = usePathname();
+  return (
+    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
+      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-8">
+        <span className="text-lg font-bold tracking-tight text-slate-800">📚 專注學習</span>
+        <nav className="flex items-center gap-1">
+          {NAV.map((n) => (
+            <Link
+              key={n.to}
+              href={n.to}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                pathname === n.to
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              )}
+            >
+              <n.icon className="h-4 w-4" />
+              <span>{n.label}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </header>
+  );
+}

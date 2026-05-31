@@ -1,39 +1,36 @@
-**Welcome to your Base44 project** 
+# 專注學習
 
-**About**
+個人讀書追蹤工具。資料存在 `data/study_data.xlsx`，可直接用 Excel 開啟。
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+## 啟動方式
 
-This project contains everything you need to run your app locally.
-
-**Edit the code in your local development environment**
-
-Any change pushed to the repo will also be reflected in the Base44 Builder.
-
-**Prerequisites:** 
-
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+1. 安裝 Node.js（https://nodejs.org）
+2. 在專案資料夾執行：
 
 ```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+npm install
 ```
 
-Run the app: `npm run dev`
+3. 複製環境變數檔：
 
-**Publish your changes**
+```
+cp .env.example .env.local
+```
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+4. 用文字編輯器打開 `.env.local`，填入 OpenAI API Key：
 
-**Docs & Support**
+```
+OPENAI_API_KEY=sk-你的金鑰
+```
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+5. 啟動：
 
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+```
+npm run dev
+```
+
+6. 開瀏覽器前往 http://localhost:3000
+
+## 資料備份
+
+資料存在 `data/study_data.xlsx`，直接複製這個檔案即可備份。
