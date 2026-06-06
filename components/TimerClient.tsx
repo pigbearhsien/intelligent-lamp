@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuthGuard } from "@/lib/useAuthGuard";
 
 type State = "idle" | "running" | "done";
 
@@ -90,6 +91,7 @@ function initFromStorage(): {
 
 export default function TimerClient() {
   const router = useRouter();
+  const { checked } = useAuthGuard();
 
   const [subject, setSubject] = useState<Subject | "">(
     () => initFromStorage().subject,
@@ -152,6 +154,7 @@ export default function TimerClient() {
     if (!startTime || !subject) return;
     setSaving(true);
     const endTime = new Date();
+    const studentId = localStorage.getItem('currentUser') ?? '';
     await fetch("/api/sessions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -161,6 +164,7 @@ export default function TimerClient() {
         endTime: endTime.toISOString(),
         durationMinutes: Math.round(elapsed / 60),
         focusScore,
+        studentId,
       }),
     });
     setSaving(false);
@@ -170,6 +174,8 @@ export default function TimerClient() {
     setStartTime(null);
     router.refresh();
   }
+
+  if (!checked) return null;
 
   const h = String(Math.floor(elapsed / 3600)).padStart(2, "0");
   const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
