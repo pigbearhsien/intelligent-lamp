@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getExams, addExam } from '@/lib/excel';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const exams = await getExams();
+    const studentId = req.nextUrl.searchParams.get('studentId') ?? undefined;
+    const exams = await getExams(studentId);
     return NextResponse.json(exams);
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });

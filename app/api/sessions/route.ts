@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStudySessions, addStudySession } from '@/lib/excel';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const sessions = await getStudySessions();
+    const studentId = req.nextUrl.searchParams.get('studentId') ?? undefined;
+    const sessions = await getStudySessions(studentId);
     return NextResponse.json(sessions);
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
