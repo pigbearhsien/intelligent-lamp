@@ -6,6 +6,7 @@ import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 import { SUBJECTS } from "@/lib/types";
 import type { StudySession } from "@/lib/types";
+import { isInPeriod } from "@/lib/period";
 
 type Period = "day" | "week" | "month";
 
@@ -35,18 +36,7 @@ export default function SubjectChart({ sessions }: SubjectChartProps) {
   const [period, setPeriod] = useState<Period>("week");
 
   const now = new Date();
-  const filtered = sessions.filter((s) => {
-    const d = new Date(s.startTime);
-    if (period === "day") return d.toDateString() === now.toDateString();
-    if (period === "week") {
-      const weekAgo = new Date(now);
-      weekAgo.setDate(now.getDate() - 7);
-      return d >= weekAgo;
-    }
-    return (
-      d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    );
-  });
+  const filtered = sessions.filter((s) => isInPeriod(new Date(s.startTime), period, now));
 
   const bySubject = filtered.reduce<Record<string, number>>((acc, s) => {
     acc[s.subject] = (acc[s.subject] ?? 0) + s.durationMinutes;

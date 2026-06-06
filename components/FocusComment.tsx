@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { StudySession } from '@/lib/types';
+import { isInPeriod } from '@/lib/period';
 
 type Period = 'day' | 'week' | 'month';
 
@@ -23,16 +24,7 @@ export default function FocusComment({ sessions }: FocusCommentProps) {
   const [loading, setLoading] = useState(false);
 
   const now = new Date();
-  const focusSessions = sessions.filter((s) => {
-    const d = new Date(s.startTime);
-    if (period === 'day') return d.toDateString() === now.toDateString();
-    if (period === 'week') {
-      const weekAgo = new Date(now);
-      weekAgo.setDate(now.getDate() - 7);
-      return d >= weekAgo;
-    }
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
+  const focusSessions = sessions.filter((s) => isInPeriod(new Date(s.startTime), period, now));
 
   async function generate() {
     if (!focusSessions.length) return;
