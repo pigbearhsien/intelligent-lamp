@@ -26,3 +26,8 @@ export interface EnvironmentReading {
   humidity: number;
   brightness: number;
 }
+
+export interface User {
+  studentId: string;
+  password: string;
+}
