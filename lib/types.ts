@@ -33,3 +33,10 @@ export interface User {
   studentId: string;
   password: string;
 }
+
+export interface Group {
+  groupId: string;
+  name: string;
+  createdBy: string;
+  members: string[]; // 序列化為逗號分隔字串存入 Excel
+}

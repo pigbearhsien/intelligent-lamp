@@ -1,9 +1,9 @@
 import ExcelJS from "exceljs";
 import path from "path";
 import fs from "fs";
-import type { StudySession, Exam, Subject, EnvironmentReading, User } from "./types";
+import type { StudySession, Exam, Subject, EnvironmentReading, User, Group } from "./types";
 
-export type { StudySession, Exam, Subject, EnvironmentReading, User };
+export type { StudySession, Exam, Subject, EnvironmentReading, User, Group };
 export { SUBJECTS } from "./types";
 
 const DATA_PATH = path.join(process.cwd(), "data", "study_data.xlsx");
@@ -63,6 +63,7 @@ export async function getStudySessions(studentId?: string): Promise<StudySession
       endTime: cellText(v[4]),
       durationMinutes: Number(v[5] ?? 0),
       focusScore: Number(v[6] ?? 0),
+      studentId: rowStudentId,
     });
   });
   return rows;
@@ -199,6 +200,115 @@ export async function addUser(data: { studentId: string; password: string }): Pr
   ws.addRow([data.studentId, data.password]);
   await saveWorkbook(wb);
   return data;
+}
+
+// ── Groups ─────────────────────────────────────────────────────
+
+function parseMembers(raw: string): string[] {
+  return raw ? raw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+}
+
+export async function getGroups(): Promise<Group[]> {
+  const wb = await getWorkbook();
+  const ws = wb.getWorksheet('Groups');
+  if (!ws) return [];
+  const rows: Group[] = [];
+  ws.eachRow((row, i) => {
+    if (i === 1) return;
+    const v = row.values as ExcelJS.CellValue[];
+    rows.push({
+      groupId: cellText(v[1]),
+      name: cellText(v[2]),
+      createdBy: cellText(v[3]),
+      members: parseMembers(cellText(v[4])),
+    });
+  });
+  return rows;
+}
+
+export async function getGroupById(groupId: string): Promise<Group | null> {
+  const groups = await getGroups();
+  return groups.find((g) => g.groupId === groupId) ?? null;
+}
+
+function generateGroupId(existing: Set<string>): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = '';
+  do {
+    id = '';
+    for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  } while (existing.has(id));
+  return id;
+}
+
+export async function addGroup(data: { name: string; createdBy: string }): Promise<Group> {
+  const wb = await getWorkbook();
+  const ws = ensureSheet(wb, 'Groups', ['groupId', 'name', 'createdBy', 'members']);
+  const existing = new Set<string>();
+  ws.eachRow((row, i) => {
+    if (i === 1) return;
+    existing.add(cellText((row.values as ExcelJS.CellValue[])[1]));
+  });
+  const groupId = generateGroupId(existing);
+  ws.addRow([groupId, data.name, data.createdBy, data.createdBy]);
+  await saveWorkbook(wb);
+  return { groupId, name: data.name, createdBy: data.createdBy, members: [data.createdBy] };
+}
+
+export async function joinGroup(groupId: string, studentId: string): Promise<Group | null> {
+  const wb = await getWorkbook();
+  const ws = wb.getWorksheet('Groups');
+  if (!ws) return null;
+  let result: Group | null = null;
+  ws.eachRow((row, i) => {
+    if (i === 1) return;
+    const v = row.values as ExcelJS.CellValue[];
+    if (cellText(v[1]) === groupId) {
+      const members = parseMembers(cellText(v[4]));
+      if (!members.includes(studentId)) {
+        members.push(studentId);
+        row.getCell(4).value = members.join(',');
+      }
+      result = {
+        groupId: cellText(v[1]),
+        name: cellText(v[2]),
+        createdBy: cellText(v[3]),
+        members,
+      };
+    }
+  });
+  if (result) await saveWorkbook(wb);
+  return result;
+}
+
+export async function leaveGroup(groupId: string, studentId: string): Promise<{ dissolved: boolean }> {
+  const wb = await getWorkbook();
+  const ws = wb.getWorksheet('Groups');
+  if (!ws) return { dissolved: false };
+  let dissolved = false;
+  const headers = ['groupId', 'name', 'createdBy', 'members'];
+  const kept: ExcelJS.CellValue[][] = [];
+  ws.eachRow((row, i) => {
+    if (i === 1) return;
+    const v = row.values as ExcelJS.CellValue[];
+    if (cellText(v[1]) !== groupId) {
+      kept.push(v.slice(1));
+      return;
+    }
+    const createdBy = cellText(v[3]);
+    if (createdBy === studentId) {
+      dissolved = true;
+    } else {
+      const members = parseMembers(cellText(v[4])).filter((m) => m !== studentId);
+      kept.push([cellText(v[1]), cellText(v[2]), createdBy, members.join(',')]);
+    }
+  });
+  wb.removeWorksheet(ws.id);
+  const newWs = wb.addWorksheet('Groups');
+  newWs.addRow(headers).font = { bold: true };
+  for (const row of kept) newWs.addRow(row);
+  await saveWorkbook(wb);
+  return { dissolved };
 }
 
 export async function updateExam(
