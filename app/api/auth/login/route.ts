@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     if (!user || user.password !== pwd) {
       return NextResponse.json({ error: '學號或密碼錯誤' }, { status: 401 });
     }
-    return NextResponse.json({ studentId: sid });
+    return NextResponse.json({ studentId: sid, displayName: user.displayName });
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }

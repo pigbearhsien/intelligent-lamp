@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getGroupById, getStudySessions } from '@/lib/excel';
+import { getGroupById, getStudySessions, getUsers } from '@/lib/excel';
 import { isInPeriod } from '@/lib/period';
 
 export async function GET(
@@ -15,6 +15,8 @@ export async function GET(
     }
 
     const allSessions = await getStudySessions();
+    const users = await getUsers();
+    const nameByStudent = new Map(users.map((u) => [u.studentId, u.displayName]));
     const now = new Date();
     const byStudent = new Map<string, { day: number; week: number; month: number }>();
     for (const sid of group.members) {
@@ -33,6 +35,7 @@ export async function GET(
       const acc = byStudent.get(studentId)!;
       return {
         studentId,
+        displayName: nameByStudent.get(studentId) ?? studentId,
         dayMinutes: acc.day,
         weekMinutes: acc.week,
         monthMinutes: acc.month,

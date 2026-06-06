@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 
 interface MemberStat {
   studentId: string;
+  displayName: string;
   dayMinutes: number;
   weekMinutes: number;
   monthMinutes: number;
@@ -16,7 +17,6 @@ interface MemberStat {
 export default function GroupsClient() {
   const { studentId, checked } = useAuthGuard();
   const [groups, setGroups] = useState<Group[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [stats, setStats] = useState<Record<string, MemberStat[]>>({});
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
@@ -30,30 +30,22 @@ export default function GroupsClient() {
   const loadGroups = useCallback(async () => {
     if (!studentId) return;
     const res = await fetch(`/api/groups?studentId=${studentId}`);
-    if (res.ok) setGroups(await res.json());
+    if (!res.ok) return;
+    const data: Group[] = await res.json();
+    setGroups(data);
+    setStats({});
+    await Promise.all(data.map(async (g) => {
+      const r = await fetch(`/api/groups/${g.groupId}/stats`);
+      if (r.ok) {
+        const s = await r.json();
+        setStats((prev) => ({ ...prev, [g.groupId]: s }));
+      }
+    }));
   }, [studentId]);
 
   useEffect(() => {
     if (checked && studentId) loadGroups();
   }, [checked, studentId, loadGroups]);
-
-  async function loadStats(groupId: string) {
-    const res = await fetch(`/api/groups/${groupId}/stats`);
-    if (res.ok) {
-      const data = await res.json();
-      setStats((prev) => ({ ...prev, [groupId]: data }));
-    }
-  }
-
-  function toggleExpand(groupId: string) {
-    if (expandedId === groupId) {
-      setExpandedId(null);
-    } else {
-      setExpandedId(groupId);
-      setStats((prev) => { const next = { ...prev }; delete next[groupId]; return next; });
-      void loadStats(groupId);
-    }
-  }
 
   async function handleCreate() {
     if (submitting) return;
@@ -115,7 +107,6 @@ export default function GroupsClient() {
         body: JSON.stringify({ studentId }),
       });
       if (res.ok) {
-        setExpandedId(null);
         setStats((prev) => { const next = { ...prev }; delete next[groupId]; return next; });
         await loadGroups();
       } else {
@@ -229,39 +220,28 @@ export default function GroupsClient() {
         <div className="flex flex-col gap-3">
           {groups.map((g) => (
             <Card key={g.groupId} className="gap-0 overflow-hidden py-0">
-              {/* Card Header — toggle row */}
-              <div
-                role="button"
-                tabIndex={0}
-                className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => toggleExpand(g.groupId)}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleExpand(g.groupId)}
-              >
+              <div className="flex items-center justify-between px-6 py-4">
                 <div>
                   <span className="font-semibold">{g.name}</span>
                   <span className="ml-2 text-xs text-muted-foreground">{g.members.length} 人</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={(e) => { e.stopPropagation(); handleCopy(g.groupId); }}
-                    title="複製小組 ID"
-                  >
-                    {copied === g.groupId ? '已複製！' : g.groupId}
-                  </Button>
-                  <span className="text-muted-foreground text-sm">{expandedId === g.groupId ? '▲' : '▼'}</span>
-                </div>
+                <Button
+                  variant="outline"
+                  size="xs"
+                  onClick={() => handleCopy(g.groupId)}
+                  title="複製小組 ID"
+                >
+                  {copied === g.groupId ? '已複製！' : g.groupId}
+                </Button>
               </div>
 
-              {/* Expanded: Member Stats */}
-              {expandedId === g.groupId && (
-                <>
+              <>
+
                   <CardContent className="border-t pt-4">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-muted-foreground text-xs">
-                          <th className="text-left pb-2 font-medium">學號</th>
+                          <th className="text-left pb-2 font-medium">名字</th>
                           <th className="text-right pb-2 font-medium">今日（分鐘）</th>
                           <th className="text-right pb-2 font-medium">本週（分鐘）</th>
                           <th className="text-right pb-2 font-medium">本月（分鐘）</th>
@@ -272,7 +252,7 @@ export default function GroupsClient() {
                           stats[g.groupId].map((m) => (
                             <tr key={m.studentId} className="border-t">
                               <td className="py-1.5 font-medium">
-                                {m.studentId}
+                                {m.displayName}
                                 {m.studentId === studentId && (
                                   <span className="ml-1 text-xs text-muted-foreground">（我）</span>
                                 )}
@@ -304,8 +284,7 @@ export default function GroupsClient() {
                       {g.createdBy === studentId ? '解散小組' : '退出小組'}
                     </Button>
                   </CardFooter>
-                </>
-              )}
+              </>
             </Card>
           ))}
         </div>

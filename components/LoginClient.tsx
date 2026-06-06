@@ -37,6 +37,7 @@ export default function LoginClient() {
       return;
     }
     localStorage.setItem('currentUser', data.studentId);
+    localStorage.setItem('currentUserName', data.displayName);
     router.push('/');
   }
 

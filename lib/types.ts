@@ -32,6 +32,7 @@ export interface EnvironmentReading {
 export interface User {
   studentId: string;
   password: string;
+  displayName: string;
 }
 
 export interface Group {

@@ -11,6 +11,7 @@ const VALID = /^[A-Za-z0-9]+$/;
 export default function RegisterClient() {
   const router = useRouter();
   const [studentId, setStudentId] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,8 +20,13 @@ export default function RegisterClient() {
     e.preventDefault();
     const sid = studentId.trim();
     const pwd = password.trim();
+    const name = displayName.trim();
     if (!sid || !pwd || !VALID.test(sid) || !VALID.test(pwd)) {
       setError('學號與密碼只能包含英文字母與數字，且不可為空');
+      return;
+    }
+    if (!name) {
+      setError('名字不可為空');
       return;
     }
     setLoading(true);
@@ -28,7 +34,7 @@ export default function RegisterClient() {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentId: sid, password: pwd }),
+      body: JSON.stringify({ studentId: sid, password: pwd, displayName: name }),
     });
     const data = await res.json();
     setLoading(false);
@@ -37,6 +43,7 @@ export default function RegisterClient() {
       return;
     }
     localStorage.setItem('currentUser', data.studentId);
+    localStorage.setItem('currentUserName', data.displayName);
     router.push('/');
   }
 
@@ -55,6 +62,15 @@ export default function RegisterClient() {
               onChange={(e) => setStudentId(e.target.value)}
               placeholder="請輸入學號（英文字母與數字）"
               autoComplete="username"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">名字</label>
+            <Input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="請輸入顯示名字"
+              autoComplete="nickname"
             />
           </div>
           <div className="space-y-2">

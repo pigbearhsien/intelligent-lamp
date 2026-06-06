@@ -17,13 +17,16 @@ export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
 
   useEffect(() => {
     setCurrentUser(localStorage.getItem('currentUser'));
+    setCurrentUserName(localStorage.getItem('currentUserName'));
   }, [pathname]);
 
   function handleLogout() {
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUserName');
     router.push('/login');
   }
 
@@ -50,7 +53,7 @@ export default function Nav() {
         </nav>
         {currentUser && (
           <div className="flex items-center gap-2 text-sm text-slate-600">
-            <span className="font-medium">{currentUser}</span>
+            <span className="font-medium">{currentUserName ?? currentUser}</span>
             <button
               onClick={handleLogout}
               className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"

@@ -181,9 +181,12 @@ export async function getUsers(): Promise<User[]> {
   ws.eachRow((row, i) => {
     if (i === 1) return;
     const v = row.values as ExcelJS.CellValue[];
+    const studentId = String(v[1] ?? '').trim();
     rows.push({
-      studentId: String(v[1] ?? ''),
-      password: String(v[2] ?? ''),
+      studentId,
+      password: String(v[2] ?? '').trim(),
+      // 向下相容：舊資料沒有 displayName 欄位時，fallback 為 studentId
+      displayName: (typeof v[3] === 'string' ? v[3] : typeof v[3] === 'number' ? String(v[3]) : '').trim() || studentId,
     });
   });
   return rows;
@@ -194,10 +197,10 @@ export async function getUserByStudentId(studentId: string): Promise<User | null
   return users.find((u) => u.studentId === studentId) ?? null;
 }
 
-export async function addUser(data: { studentId: string; password: string }): Promise<User> {
+export async function addUser(data: { studentId: string; password: string; displayName: string }): Promise<User> {
   const wb = await getWorkbook();
-  const ws = ensureSheet(wb, 'Users', ['studentId', 'password']);
-  ws.addRow([data.studentId, data.password]);
+  const ws = ensureSheet(wb, 'Users', ['studentId', 'password', 'displayName']);
+  ws.addRow([data.studentId, data.password, data.displayName]);
   await saveWorkbook(wb);
   return data;
 }
