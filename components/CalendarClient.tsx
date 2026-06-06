@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useAuthGuard } from "@/lib/useAuthGuard";
 import {
   Calendar as BigCalendar,
   dateFnsLocalizer,
@@ -40,7 +41,7 @@ type ExamForm = {
 const localizer = dateFnsLocalizer({
   format,
   parse,
-  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 0 }),
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
   getDay,
   locales: { "zh-TW": zhTW },
 });
@@ -281,6 +282,7 @@ function EventComponent({ event }: EventProps<CalendarEvent>) {
 }
 
 export default function CalendarClient() {
+  const { checked } = useAuthGuard();
   const [exams, setExams] = useState<Exam[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
@@ -288,13 +290,15 @@ export default function CalendarClient() {
   const [saving, setSaving] = useState(false);
 
   async function load() {
-    const data = await fetch("/api/exams").then((r) => r.json());
+    const studentId = localStorage.getItem('currentUser') ?? '';
+    const data = await fetch(`/api/exams?studentId=${studentId}`).then((r) => r.json());
     setExams(data);
   }
 
   useEffect(() => {
     void (async () => {
-      const data = await fetch("/api/exams").then((r) => r.json());
+      const studentId = localStorage.getItem('currentUser') ?? '';
+      const data = await fetch(`/api/exams?studentId=${studentId}`).then((r) => r.json());
       setExams(data);
     })();
   }, []);
@@ -355,16 +359,19 @@ export default function CalendarClient() {
         body: JSON.stringify(body),
       });
     } else {
+      const studentId = localStorage.getItem('currentUser') ?? '';
       await fetch("/api/exams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, studentId }),
       });
     }
     setSaving(false);
     await load();
     closeModal();
   }
+
+  if (!checked) return null;
 
   return (
     <>
