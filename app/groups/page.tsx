@@ -1,4 +1,12 @@
+'use client';
+
+import { useAuthGuard } from '@/lib/useAuthGuard';
+
 export default function GroupsPage() {
+  const { checked } = useAuthGuard();
+
+  if (!checked) return null;
+
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <div className="text-6xl mb-4">🚧</div>
