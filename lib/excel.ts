@@ -1,9 +1,9 @@
 import ExcelJS from "exceljs";
 import path from "path";
 import fs from "fs";
-import type { StudySession, Exam, Subject, EnvironmentReading } from "./types";
+import type { StudySession, Exam, Subject, EnvironmentReading, User } from "./types";
 
-export type { StudySession, Exam, Subject, EnvironmentReading };
+export type { StudySession, Exam, Subject, EnvironmentReading, User };
 export { SUBJECTS } from "./types";
 
 const DATA_PATH = path.join(process.cwd(), "data", "study_data.xlsx");
@@ -154,6 +154,37 @@ export async function getEnvironmentReadings(): Promise<EnvironmentReading[]> {
     });
   });
   return rows;
+}
+
+// ── Users ──────────────────────────────────────────────────────
+
+export async function getUsers(): Promise<User[]> {
+  const wb = await getWorkbook();
+  const ws = wb.getWorksheet('Users');
+  if (!ws) return [];
+  const rows: User[] = [];
+  ws.eachRow((row, i) => {
+    if (i === 1) return;
+    const v = row.values as ExcelJS.CellValue[];
+    rows.push({
+      studentId: String(v[1] ?? ''),
+      password: String(v[2] ?? ''),
+    });
+  });
+  return rows;
+}
+
+export async function getUserByStudentId(studentId: string): Promise<User | null> {
+  const users = await getUsers();
+  return users.find((u) => u.studentId === studentId) ?? null;
+}
+
+export async function addUser(data: { studentId: string; password: string }): Promise<User> {
+  const wb = await getWorkbook();
+  const ws = ensureSheet(wb, 'Users', ['studentId', 'password']);
+  ws.addRow([data.studentId, data.password]);
+  await saveWorkbook(wb);
+  return data;
 }
 
 export async function updateExam(
