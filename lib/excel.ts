@@ -38,7 +38,7 @@ async function saveWorkbook(wb: ExcelJS.Workbook) {
 
 // ── StudySessions ──────────────────────────────────────────────
 
-export async function getStudySessions(): Promise<StudySession[]> {
+export async function getStudySessions(studentId?: string): Promise<StudySession[]> {
   const wb = await getWorkbook();
   const ws = wb.getWorksheet("StudySessions");
   if (!ws) return [];
@@ -46,6 +46,8 @@ export async function getStudySessions(): Promise<StudySession[]> {
   ws.eachRow((row, i) => {
     if (i === 1) return;
     const v = row.values as ExcelJS.CellValue[];
+    const rowStudentId = v[7] ? String(v[7]) : '';
+    if (studentId && rowStudentId !== studentId) return;
     rows.push({
       id: String(v[1] ?? ""),
       subject: String(v[2] ?? "") as Subject,
@@ -69,16 +71,17 @@ export async function addStudySession(
     "endTime",
     "durationMinutes",
     "focusScore",
+    "studentId",
   ]);
   const id = Date.now().toString();
-  ws.addRow([id, data.subject, data.startTime, data.endTime, data.durationMinutes, data.focusScore]);
+  ws.addRow([id, data.subject, data.startTime, data.endTime, data.durationMinutes, data.focusScore, data.studentId ?? '']);
   await saveWorkbook(wb);
   return { id, ...data };
 }
 
 // ── Exams ──────────────────────────────────────────────────────
 
-export async function getExams(): Promise<Exam[]> {
+export async function getExams(studentId?: string): Promise<Exam[]> {
   const wb = await getWorkbook();
   const ws = wb.getWorksheet("Exams");
   if (!ws) return [];
@@ -86,6 +89,8 @@ export async function getExams(): Promise<Exam[]> {
   ws.eachRow((row, i) => {
     if (i === 1) return;
     const v = row.values as ExcelJS.CellValue[];
+    const rowStudentId = v[7] ? String(v[7]) : '';
+    if (studentId && rowStudentId !== studentId) return;
     rows.push({
       id: String(v[1] ?? ""),
       examDate: String(v[2] ?? ""),
@@ -107,9 +112,10 @@ export async function addExam(data: Omit<Exam, "id">): Promise<Exam> {
     "subject",
     "myScore",
     "averageScore",
+    "studentId",
   ]);
   const id = Date.now().toString();
-  ws.addRow([id, data.examDate, data.examName, data.subject, data.myScore, data.averageScore]);
+  ws.addRow([id, data.examDate, data.examName, data.subject, data.myScore, data.averageScore, data.studentId ?? '']);
   await saveWorkbook(wb);
   return { id, ...data };
 }
@@ -118,7 +124,7 @@ export async function deleteExam(id: string): Promise<boolean> {
   const wb = await getWorkbook();
   const ws = wb.getWorksheet("Exams");
   if (!ws) return false;
-  const headers = ["id", "examDate", "examName", "subject", "myScore", "averageScore"];
+  const headers = ["id", "examDate", "examName", "subject", "myScore", "averageScore", "studentId"];
   const kept: ExcelJS.CellValue[][] = [];
   let found = false;
   ws.eachRow((row, i) => {
@@ -211,6 +217,7 @@ export async function updateExam(
         subject: String(row.getCell(4).value ?? "") as Subject,
         myScore: row.getCell(5).value != null ? Number(row.getCell(5).value) : null,
         averageScore: row.getCell(6).value != null ? Number(row.getCell(6).value) : null,
+        studentId: row.getCell(7).value != null ? String(row.getCell(7).value) : '',
       };
     }
   });

@@ -9,6 +9,7 @@ export interface StudySession {
   endTime: string;   // ISO datetime
   durationMinutes: number;
   focusScore: number;
+  studentId?: string;
 }
 
 export interface Exam {
@@ -18,6 +19,7 @@ export interface Exam {
   examName: string;
   myScore: number | null;
   averageScore: number | null;
+  studentId?: string;
 }
 
 export interface EnvironmentReading {
