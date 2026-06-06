@@ -92,6 +92,7 @@ export async function getExams(): Promise<Exam[]> {
       examName: String(v[3] ?? ""),
       subject: String(v[4] ?? "") as Subject,
       myScore: v[5] != null ? Number(v[5]) : null,
+      averageScore: v[6] != null ? Number(v[6]) : null,
     });
   });
   return rows;
@@ -105,9 +106,10 @@ export async function addExam(data: Omit<Exam, "id">): Promise<Exam> {
     "examName",
     "subject",
     "myScore",
+    "averageScore",
   ]);
   const id = Date.now().toString();
-  ws.addRow([id, data.examDate, data.examName, data.subject, data.myScore]);
+  ws.addRow([id, data.examDate, data.examName, data.subject, data.myScore, data.averageScore]);
   await saveWorkbook(wb);
   return { id, ...data };
 }
@@ -116,7 +118,7 @@ export async function deleteExam(id: string): Promise<boolean> {
   const wb = await getWorkbook();
   const ws = wb.getWorksheet("Exams");
   if (!ws) return false;
-  const headers = ["id", "examDate", "examName", "subject", "myScore"];
+  const headers = ["id", "examDate", "examName", "subject", "myScore", "averageScore"];
   const kept: ExcelJS.CellValue[][] = [];
   let found = false;
   ws.eachRow((row, i) => {
@@ -170,13 +172,14 @@ export async function updateExam(
       if (data.examName != null) row.getCell(3).value = data.examName;
       if (data.subject != null) row.getCell(4).value = data.subject;
       if (data.myScore !== undefined) row.getCell(5).value = data.myScore;
+      if (data.averageScore !== undefined) row.getCell(6).value = data.averageScore;
       updated = {
         id,
         examDate: String(row.getCell(2).value ?? ""),
         examName: String(row.getCell(3).value ?? ""),
         subject: String(row.getCell(4).value ?? "") as Subject,
-        myScore:
-          row.getCell(5).value != null ? Number(row.getCell(5).value) : null,
+        myScore: row.getCell(5).value != null ? Number(row.getCell(5).value) : null,
+        averageScore: row.getCell(6).value != null ? Number(row.getCell(6).value) : null,
       };
     }
   });

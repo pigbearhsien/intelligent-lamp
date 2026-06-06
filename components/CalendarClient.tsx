@@ -34,6 +34,7 @@ type ExamForm = {
   subject: Subject | "";
   examName: string;
   myScore: string;
+  averageScore: string;
 };
 
 const localizer = dateFnsLocalizer({
@@ -84,6 +85,7 @@ const emptyForm: ExamForm = {
   subject: "",
   examName: "",
   myScore: "",
+  averageScore: "",
 };
 
 function examToForm(exam: Exam): ExamForm {
@@ -92,6 +94,7 @@ function examToForm(exam: Exam): ExamForm {
     subject: exam.subject,
     examName: exam.examName ?? "",
     myScore: exam.myScore != null ? String(exam.myScore) : "",
+    averageScore: exam.averageScore != null ? String(exam.averageScore) : "",
   };
 }
 
@@ -205,8 +208,21 @@ function ExamModal({
             <label className="text-sm font-medium text-slate-600">成績</label>
             <Input
               type="number"
+              min={0}
               value={form.myScore}
               onChange={(e) => onChange({ myScore: e.target.value })}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 shadow-none"
+              placeholder="選填"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-600">平均成績</label>
+            <Input
+              type="number"
+              min={0}
+              value={form.averageScore}
+              onChange={(e) => onChange({ averageScore: e.target.value })}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 shadow-none"
               placeholder="選填"
             />
@@ -232,7 +248,13 @@ function ExamModal({
             </button>
             <button
               type="submit"
-              disabled={saving || !form.subject || !form.examName}
+              disabled={
+                saving ||
+                !form.subject ||
+                !form.examName ||
+                (form.myScore !== "" && Number(form.myScore) < 0) ||
+                (form.averageScore !== "" && Number(form.averageScore) < 0)
+              }
               className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-700 disabled:opacity-50"
             >
               {saving ? "儲存中..." : "儲存"}
@@ -324,6 +346,7 @@ export default function CalendarClient() {
       subject: form.subject,
       examName: form.examName,
       myScore: form.myScore !== "" ? Number(form.myScore) : null,
+      averageScore: form.averageScore !== "" ? Number(form.averageScore) : null,
     };
     if (selectedExam) {
       await fetch(`/api/exams/${selectedExam.id}`, {

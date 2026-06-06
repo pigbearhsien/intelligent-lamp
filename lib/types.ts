@@ -17,6 +17,7 @@ export interface Exam {
   subject: Subject;
   examName: string;
   myScore: number | null;
+  averageScore: number | null;
 }
 
 export interface EnvironmentReading {
