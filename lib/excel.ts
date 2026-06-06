@@ -16,6 +16,14 @@ async function getWorkbook(): Promise<ExcelJS.Workbook> {
   return wb;
 }
 
+function cellText(v: ExcelJS.CellValue): string {
+  if (v == null) return '';
+  if (typeof v === 'object' && 'richText' in (v as object)) {
+    return (v as ExcelJS.CellRichTextValue).richText.map((r) => r.text).join('');
+  }
+  return String(v);
+}
+
 function ensureSheet(
   wb: ExcelJS.Workbook,
   name: string,
@@ -46,13 +54,13 @@ export async function getStudySessions(studentId?: string): Promise<StudySession
   ws.eachRow((row, i) => {
     if (i === 1) return;
     const v = row.values as ExcelJS.CellValue[];
-    const rowStudentId = v[7] ? String(v[7]) : '';
+    const rowStudentId = v[7] ? String(v[7]).trim() : '';
     if (studentId && rowStudentId !== studentId) return;
     rows.push({
       id: String(v[1] ?? ""),
       subject: String(v[2] ?? "") as Subject,
-      startTime: String(v[3] ?? ""),
-      endTime: String(v[4] ?? ""),
+      startTime: cellText(v[3]),
+      endTime: cellText(v[4]),
       durationMinutes: Number(v[5] ?? 0),
       focusScore: Number(v[6] ?? 0),
     });
@@ -89,7 +97,7 @@ export async function getExams(studentId?: string): Promise<Exam[]> {
   ws.eachRow((row, i) => {
     if (i === 1) return;
     const v = row.values as ExcelJS.CellValue[];
-    const rowStudentId = v[7] ? String(v[7]) : '';
+    const rowStudentId = v[7] ? String(v[7]).trim() : '';
     if (studentId && rowStudentId !== studentId) return;
     rows.push({
       id: String(v[1] ?? ""),

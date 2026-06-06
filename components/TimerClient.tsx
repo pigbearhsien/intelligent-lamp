@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Play, Square, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -89,8 +88,7 @@ function initFromStorage(): {
   };
 }
 
-export default function TimerClient() {
-  const router = useRouter();
+export default function TimerClient({ onSaved }: { onSaved?: () => void }) {
   const { checked } = useAuthGuard();
 
   const [subject, setSubject] = useState<Subject | "">(
@@ -172,7 +170,7 @@ export default function TimerClient() {
     setState("idle");
     setElapsed(0);
     setStartTime(null);
-    router.refresh();
+    onSaved?.();
   }
 
   if (!checked) return null;

@@ -14,6 +14,14 @@ export default function HomeClient() {
   const [latest, setLatest] = useState<EnvironmentReading | null>(null);
   const [loading, setLoading] = useState(true);
 
+  function fetchSessions() {
+    const studentId = localStorage.getItem('currentUser');
+    if (!studentId) return;
+    fetch(`/api/sessions?studentId=${studentId}`)
+      .then((r) => r.json())
+      .then((data) => setSessions(Array.isArray(data) ? data : []));
+  }
+
   useEffect(() => {
     const studentId = localStorage.getItem('currentUser');
     if (!studentId) {
@@ -64,7 +72,7 @@ export default function HomeClient() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TimerClient />
+        <TimerClient onSaved={fetchSessions} />
         <FocusComment sessions={sessions} />
       </div>
 
