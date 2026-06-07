@@ -42,7 +42,7 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 pb-36">
       <div className="bg-white rounded-2xl border border-slate-200 shadow p-8 w-full max-w-sm space-y-6">
         <div className="text-center space-y-1">
           <p className="text-2xl font-bold">📚 專注學習</p>
