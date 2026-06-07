@@ -1,35 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
 import { Thermometer, Droplets, Sun } from 'lucide-react';
 import SubjectChart from '@/components/SubjectChart';
 import FocusComment from '@/components/FocusComment';
 import TimerClient from '@/components/TimerClient';
+import { useAuthGuard } from '@/lib/useAuthGuard';
 import type { StudySession, EnvironmentReading } from '@/lib/types';
 
 export default function HomeClient() {
-  const router = useRouter();
+  const { studentId, checked } = useAuthGuard();
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [latest, setLatest] = useState<EnvironmentReading | null>(null);
   const [loading, setLoading] = useState(true);
 
-  function fetchSessions() {
-    const studentId = localStorage.getItem('currentUser');
+  const fetchSessions = useCallback(() => {
     if (!studentId) return;
-    fetch(`/api/sessions?studentId=${studentId}`)
+    fetch(`/api/sessions?studentId=${encodeURIComponent(studentId)}`)
       .then((r) => r.json())
       .then((data) => setSessions(Array.isArray(data) ? data : []));
-  }
+  }, [studentId]);
 
   useEffect(() => {
-    const studentId = localStorage.getItem('currentUser');
-    if (!studentId) {
-      router.push('/login');
-      return;
-    }
+    if (!checked || !studentId) return;
     Promise.all([
-      fetch(`/api/sessions?studentId=${studentId}`).then((r) => r.json()),
+      fetch(`/api/sessions?studentId=${encodeURIComponent(studentId)}`).then((r) => r.json()),
       fetch('/api/environment').then((r) => r.json()),
     ]).then(([sessionsData, readingsData]) => {
       setSessions(Array.isArray(sessionsData) ? sessionsData : []);
@@ -37,7 +32,7 @@ export default function HomeClient() {
       setLatest(readings.length ? readings[readings.length - 1] : null);
       setLoading(false);
     });
-  }, [router]);
+  }, [checked, studentId]);
 
   if (loading) {
     return (
